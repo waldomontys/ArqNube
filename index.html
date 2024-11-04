@@ -9,3 +9,50 @@
     <h1>Bienvenidos<h1>
 </body>
 </html>
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const char* ssid = "TU_SSID";
+const char* password = "TU_CONTRASEÑA";
+const char* serverAddress = "IP_DEL_SERVIDOR"; 
+
+const int buttonPin = 5;
+const int switchPin = 18;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(switchPin, INPUT_PULLUP);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi conectado");
+}
+
+void loop() {
+  if (digitalRead(buttonPin) == LOW) {
+    sendHttpRequest("/led1on"); 
+  }
+  if (digitalRead(switchPin) == LOW) {
+    sendHttpRequest("/led2on");
+  } else {
+    sendHttpRequest("/led2off"); 
+  }
+  delay(100); 
+}
+
+void sendHttpRequest(const char* path) {
+  HTTPClient http;
+  http.begin("http://" + String(serverAddress) + path);
+  int httpCode = http.GET();
+  if (httpCode > 0) {
+    Serial.printf("[HTTP] Respuesta del servidor: %d\n", httpCode);
+  } else {
+    Serial.printf("[HTTP] Error al enviar la solicitud: %s\n", http.errorToString(httpCode).c_str());
+  }
+  http.end();
+}
